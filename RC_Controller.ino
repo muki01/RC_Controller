@@ -4,23 +4,31 @@
 #include <Wire.h>
 #include <SPIFFS.h>
 
+#include <BleGamepad.h>
+BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
+bool BluetoothModee = false;
+
 //Inputs outputs
-#define battery_in 32
-#define buttons_analog_in 33
-#define toggle_1 25
-#define toggle_2 26
-#define throttle_in 27
-#define yaw_in 14
-#define pitch_in 12
-#define roll_in 13
-#define mode_in 23
+#define throttle_in 0
+#define yaw_in 4
+#define pitch_in 34
+#define roll_in 39
+
+#define pot1_in 35
+#define pot2_in 12
+#define toggle_1 32
+#define toggle_2 15
+
+#define battery_in 33
+#define buttons_analog_in 27
 #define buzzer 22
+#define led 2
 
-#define ce_Pin 21
-#define csnPin 19
+#define ce_Pin 17
+#define csnPin 5
 
-const uint64_t pipeOut = 0xE8E8F0F0E1LL;  //IMPORTANT: The same as in the receiver!!!
-RF24 radio(ce_Pin, csnPin);               // select  CSN  pin
+const uint64_t pipeOut = 0xE8E8F0F0E1LL;
+RF24 radio(ce_Pin, csnPin);
 
 // The sizeof this struct should not exceed 32 bytes
 // This gives us up to 32 8 bits channals
@@ -31,6 +39,8 @@ struct MyData {
   byte roll;
   byte AUX1;
   byte AUX2;
+  byte pot1;
+  byte pot2;
 };
 
 MyData data;
@@ -40,13 +50,11 @@ float battery_level = 0;
 int button_read = 0;
 
 int throttle_fine = 0, yaw_fine = 0, pitch_fine = 0, roll_fine = 0;
-int throttle_to_send = 0, yaw_to_send = 0, pitch_to_send = 0, roll_to_send = 0;
-bool throttle_inverted = false, yaw_inverted = true, pitch_inverted = true, roll_inverted = false;
+int throttle_to_send = 0, yaw_to_send = 0, pitch_to_send = 0, roll_to_send = 0, pot1_to_send = 0, pot2_to_send = 0;
+bool throttle_inverted = true, yaw_inverted = true, pitch_inverted = true, roll_inverted = true;
 bool throttle_decrease = false, yaw_decrease = false, pitch_decrease = false, roll_decrease = false;
 bool throttle_increase = false, yaw_increase = false, pitch_increase = false, roll_increase = false;
 
-bool mode = true;
-bool mode_button_pressed = false;
 bool sound = true;
 int counter = 0;
 int invert_counter = 0;
@@ -57,216 +65,244 @@ void setup() {
   initSpiffs();
   readSettings();
 
+  pinMode(throttle_in, INPUT);
+  pinMode(yaw_in, INPUT);
+  pinMode(pitch_in, INPUT);
+  pinMode(roll_in, INPUT);
+  pinMode(pot1_in, INPUT);
+  //pinMode(pot2_in, INPUT);
+  pinMode(toggle_1, INPUT_PULLUP);
+  pinMode(toggle_2, INPUT_PULLUP);
+
+  pinMode(battery_in, INPUT);
   pinMode(buttons_analog_in, INPUT);
-  pinMode(mode_in, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
-  digitalWrite(buzzer, LOW);
+  pinMode(led, OUTPUT);
 
   startMelody();
 
-  //Start everything up
-  radio.begin();
-  radio.setAutoAck(false);
-  radio.setPALevel(RF24_PA_HIGH);
-  radio.setDataRate(RF24_250KBPS);
-  radio.openWritingPipe(pipeOut);
-  resetData();
+  if (digitalRead(toggle_1)) {
+    BluetoothModee = false;
+    radio.begin();
+    radio.setAutoAck(false);
+    radio.setPALevel(RF24_PA_HIGH);
+    radio.setDataRate(RF24_250KBPS);
+    radio.openWritingPipe(pipeOut);
+    resetData();
+  } else {
+    BluetoothModee = true;
+    bleGamepad.begin();
+  }
+
+  yaw_fine = 4;
+  pitch_fine= 7;
+  roll_fine = -10;
 }
 
 
 void loop() {
-  Serial.print("Throttle_fine= "), Serial.print(throttle_fine);
-  Serial.print(" Yaw_fine= "), Serial.print(yaw_fine);
-  Serial.print(" Pitch_fine= "), Serial.print(pitch_fine);
-  Serial.print(" Roll_fine= "), Serial.print(roll_fine);
-  Serial.print(" Throttle_inverted= "), Serial.print(throttle_inverted);
-  Serial.print(" Yaw_inverted= "), Serial.print(yaw_inverted);
-  Serial.print(" Pitch_inverted= "), Serial.print(pitch_inverted);
-  Serial.print(" Roll_inverted= "), Serial.print(roll_inverted);
+  // Serial.print("Throttle_fine= "), Serial.print(throttle_fine);
+  // Serial.print(" Yaw_fine= "), Serial.print(yaw_fine);
+  // Serial.print(" Pitch_fine= "), Serial.print(pitch_fine);
+  // Serial.print(" Roll_fine= "), Serial.print(roll_fine);
+  // Serial.print(" Throttle_inverted= "), Serial.print(throttle_inverted);
+  // Serial.print(" Yaw_inverted= "), Serial.print(yaw_inverted);
+  // Serial.print(" Pitch_inverted= "), Serial.print(pitch_inverted);
+  // Serial.print(" Roll_inverted= "), Serial.print(roll_inverted);
 
   //battery read
-  battery_level = analogRead(battery_in) / 67.331;  //Voltage divider is 10k and 20K so 1/3
+  battery_level = (double)analogRead(battery_in) / 4096 * 10.0;
+  battery_level = round(battery_level * 10) / 10;
 
-
-  //Buttons read
-  button_read = analogRead(buttons_analog_in);
-  Serial.print(" Btn= "), Serial.println(button_read);
-  //Reset buttons
-  if (button_read > 820) {
-    yaw_decrease = false;
-    throttle_decrease = false;
-    pitch_decrease = false;
-    roll_decrease = false;
-    yaw_increase = false;
-    throttle_increase = false;
-    pitch_increase = false;
-    roll_increase = false;
+  if (battery_level >= 4.5 && battery_level <= 5.5) {
+    analogWrite(led, 20);
+  } else {
+    analogWrite(led, 0);
   }
 
-  //------------------------------------YAW buttons------------------------------------
-  if (button_read < 260 && button_read > 200 && !yaw_decrease) {
-    yaw_fine = yaw_fine + 1;
-    yaw_decrease = true;
-    updateValue("yaw_fine", yaw_fine);
-    sound ? melody1() : (void)0;
-  }
-  if (button_read < 120 && button_read > 50 && !yaw_increase) {
-    yaw_fine = yaw_fine - 1;
-    yaw_increase = true;
-    updateValue("yaw_fine", yaw_fine);
-    sound ? melody1() : (void)0;
-  }
+  if (BluetoothModee) {
+    if (bleGamepad.isConnected()) {
 
-  //------------------------------------THROTTLE buttons------------------------------------
-  if (button_read < 500 && button_read > 430 && !throttle_decrease) {
-    throttle_fine = throttle_fine + 1;
-    throttle_decrease = true;
-    updateValue("throttle_fine", throttle_fine);
-    sound ? melody1() : (void)0;
-  }
-  if (button_read < 380 && button_read > 320 && !throttle_increase) {
-    throttle_fine = throttle_fine - 1;
-    throttle_increase = true;
-    updateValue("throttle_fine", throttle_fine);
-    sound ? melody1() : (void)0;
-  }
+      int throttle_data = map(analogRead(throttle_in), 1300, 3400, 0, 32767);
+      int yaw_data = map(analogRead(yaw_in), 400, 3500, 0, 32767);
+      int pitch_data = map(analogRead(pitch_in), 600, 3300, 0, 32767);
+      int roll_data = map(analogRead(roll_in), 300, 3300, 32767, 0);
+      int pot1_data = map(analogRead(pot1_in), 0, 4095, 32767, 0);
 
-  //------------------------------------PITCH buttons------------------------------------
-  if (button_read < 610 && button_read > 550 && !pitch_decrease) {
-    pitch_fine = pitch_fine + 1;
-    pitch_decrease = true;
-    updateValue("pitch_fine", pitch_fine);
-    sound ? melody1() : (void)0;
-  }
-  if (button_read < 690 && button_read > 630 && !pitch_increase) {
-    pitch_fine = pitch_fine - 1;
-    pitch_increase = true;
-    updateValue("pitch_fine", pitch_fine);
-    sound ? melody1() : (void)0;
-  }
+      int mapThrottle = constrain(throttle_data, 0, 32767);
+      int mapYaw = constrain(yaw_data, 0, 32767);
+      int mapPitch = constrain(pitch_data, 0, 32767);
+      int mapRoll = constrain(roll_data, 0, 32767);
+      int mapPot1 = constrain(pot1_data, 0, 32767);
+      int AUX1 = digitalRead(toggle_1);
+      int AUX2 = digitalRead(toggle_2);
 
-  //------------------------------------ROLL buttons------------------------------------
-  if (button_read < 820 && button_read > 760 && !roll_decrease) {
-    roll_fine = roll_fine + 1;
-    roll_decrease = true;
-    updateValue("roll_fine", roll_fine);
-    sound ? melody1() : (void)0;
-  }
-  if (button_read < 760 && button_read > 700 && !roll_increase) {
-    roll_fine = roll_fine - 1;
-    roll_increase = true;
-    updateValue("roll_fine", roll_fine);
-    sound ? melody1() : (void)0;
-  }
+      if (!AUX1)
+        bleGamepad.press(BUTTON_1);
+      else
+        bleGamepad.release(BUTTON_1);
 
-  //------------------------------------Mode select button------------------------------------
-  if (!digitalRead(mode_in) && !mode_button_pressed) {
-    mode = !mode;
-    mode_button_pressed = true;
-    sound ? melody1() : (void)0;
-  }
+      if (!AUX2)
+        bleGamepad.press(BUTTON_2);
+      else
+        bleGamepad.release(BUTTON_2);
 
-  if (!digitalRead(mode_in) && !sound_changed) {
-    if (counter > 20) {
-      sound = !sound;
-      counter = 0;
-      sound_changed = true;
+      bleGamepad.setAxes(mapYaw, mapThrottle, mapPitch, mapRoll, mapPot1, 32767, 32767, 32767);
+    }
+  } else {
+
+    //Buttons read
+    button_read = 0;  //analogRead(buttons_analog_in);
+    //Serial.print("Btn= "), Serial.print(button_read);
+
+    //Reset buttons
+    if (button_read > 820) {
+      yaw_decrease = false;
+      throttle_decrease = false;
+      pitch_decrease = false;
+      roll_decrease = false;
+      yaw_increase = false;
+      throttle_increase = false;
+      pitch_increase = false;
+      roll_increase = false;
+    }
+
+    //------------------------------------YAW buttons------------------------------------
+    if (button_read < 260 && button_read > 200 && !yaw_decrease) {
+      yaw_fine = yaw_fine + 1;
+      yaw_decrease = true;
+      updateValue("yaw_fine", yaw_fine);
       sound ? melody1() : (void)0;
     }
-    counter = counter + 1;
-  }
-
-
-
-  //Invert channels
-  //------------------------------------THROTTLE INVERT------------------------------------
-  if (button_read < 500 && button_read > 430) {
-    if (invert_counter > 30) {
-      throttle_inverted = !throttle_inverted;
-      invert_counter = 0;
-      updateValueBool("throttle_inverted", throttle_inverted);
+    if (button_read < 120 && button_read > 50 && !yaw_increase) {
+      yaw_fine = yaw_fine - 1;
+      yaw_increase = true;
+      updateValue("yaw_fine", yaw_fine);
       sound ? melody1() : (void)0;
-      delay(1500);
     }
-    invert_counter = invert_counter + 1;
-  }
 
-  //------------------------------------YAW INVERT------------------------------------
-  if (button_read < 260 && button_read > 200) {
-    if (invert_counter > 30) {
-      yaw_inverted = !yaw_inverted;
-      invert_counter = 0;
-      updateValueBool("yaw_inverted", yaw_inverted);
+    //------------------------------------THROTTLE buttons------------------------------------
+    if (button_read < 500 && button_read > 430 && !throttle_decrease) {
+      throttle_fine = throttle_fine + 1;
+      throttle_decrease = true;
+      updateValue("throttle_fine", throttle_fine);
       sound ? melody1() : (void)0;
-      delay(1500);
     }
-    invert_counter = invert_counter + 1;
-  }
-
-  //------------------------------------PITCH INVERT------------------------------------
-  if (button_read < 610 && button_read > 550) {
-    if (invert_counter > 30) {
-      pitch_inverted = !pitch_inverted;
-      invert_counter = 0;
-      updateValueBool("pitch_inverted", pitch_inverted);
+    if (button_read < 380 && button_read > 320 && !throttle_increase) {
+      throttle_fine = throttle_fine - 1;
+      throttle_increase = true;
+      updateValue("throttle_fine", throttle_fine);
       sound ? melody1() : (void)0;
-      delay(1500);
     }
-    invert_counter = invert_counter + 1;
-  }
 
-  //------------------------------------ROLL INVERT------------------------------------
-  if (button_read < 820 && button_read > 760) {
-    if (invert_counter > 30) {
-      roll_inverted = !roll_inverted;
-      invert_counter = 0;
-      updateValueBool("roll_inverted", roll_inverted);
+    //------------------------------------PITCH buttons------------------------------------
+    if (button_read < 610 && button_read > 550 && !pitch_decrease) {
+      pitch_fine = pitch_fine + 1;
+      pitch_decrease = true;
+      updateValue("pitch_fine", pitch_fine);
       sound ? melody1() : (void)0;
-      delay(1500);
     }
-    invert_counter = invert_counter + 1;
+    if (button_read < 690 && button_read > 630 && !pitch_increase) {
+      pitch_fine = pitch_fine - 1;
+      pitch_increase = true;
+      updateValue("pitch_fine", pitch_fine);
+      sound ? melody1() : (void)0;
+    }
+
+    //------------------------------------ROLL buttons------------------------------------
+    if (button_read < 820 && button_read > 760 && !roll_decrease) {
+      roll_fine = roll_fine + 1;
+      roll_decrease = true;
+      updateValue("roll_fine", roll_fine);
+      sound ? melody1() : (void)0;
+    }
+    if (button_read < 760 && button_read > 700 && !roll_increase) {
+      roll_fine = roll_fine - 1;
+      roll_increase = true;
+      updateValue("roll_fine", roll_fine);
+      sound ? melody1() : (void)0;
+    }
+
+    //Invert channels
+    //------------------------------------THROTTLE INVERT------------------------------------
+    if (button_read < 500 && button_read > 430) {
+      if (invert_counter > 30) {
+        throttle_inverted = !throttle_inverted;
+        invert_counter = 0;
+        updateValueBool("throttle_inverted", throttle_inverted);
+        sound ? melody1() : (void)0;
+        delay(1500);
+      }
+      invert_counter = invert_counter + 1;
+    }
+
+    //------------------------------------YAW INVERT------------------------------------
+    if (button_read < 260 && button_read > 200) {
+      if (invert_counter > 30) {
+        yaw_inverted = !yaw_inverted;
+        invert_counter = 0;
+        updateValueBool("yaw_inverted", yaw_inverted);
+        sound ? melody1() : (void)0;
+        delay(1500);
+      }
+      invert_counter = invert_counter + 1;
+    }
+
+    //------------------------------------PITCH INVERT------------------------------------
+    if (button_read < 610 && button_read > 550) {
+      if (invert_counter > 30) {
+        pitch_inverted = !pitch_inverted;
+        invert_counter = 0;
+        updateValueBool("pitch_inverted", pitch_inverted);
+        sound ? melody1() : (void)0;
+        delay(1500);
+      }
+      invert_counter = invert_counter + 1;
+    }
+
+    //------------------------------------ROLL INVERT------------------------------------
+    if (button_read < 820 && button_read > 760) {
+      if (invert_counter > 30) {
+        roll_inverted = !roll_inverted;
+        invert_counter = 0;
+        updateValueBool("roll_inverted", roll_inverted);
+        sound ? melody1() : (void)0;
+        delay(1500);
+      }
+      invert_counter = invert_counter + 1;
+    }
+
+
+    throttle_to_send = map(analogRead(throttle_in), 1300, 3400, 255, 0);
+    yaw_to_send = map(analogRead(yaw_in), 400, 3500, 0, 255);
+    pitch_to_send = map(analogRead(pitch_in), 600, 3300, 0, 255);
+    roll_to_send = map(analogRead(roll_in), 300, 3300, 255, 0);
+    pot1_to_send = map(analogRead(pot1_in), 0, 4095, 255, 0);
+    //pot2_to_send = map(analogRead(pot2_in), 0, 4095, 255, 0);
+
+    throttle_to_send = throttle_to_send + throttle_fine;
+    yaw_to_send = yaw_to_send + yaw_fine;
+    pitch_to_send = pitch_to_send + pitch_fine;
+    roll_to_send = roll_to_send + roll_fine;
+
+    data.throttle = constrain(throttle_to_send, 0, 255);
+    data.yaw = constrain(yaw_to_send, 0, 255);
+    data.pitch = constrain(pitch_to_send, 0, 255);
+    data.roll = constrain(roll_to_send, 0, 255);
+    data.pot1 = constrain(pot1_to_send, 0, 255);
+    //data.pot2 = constrain(pot2_to_send, 0, 255);
+    data.AUX1 = !digitalRead(toggle_1);
+    data.AUX2 = data.pot1;  //digitalRead(toggle_2);
+
+    Serial.print(" Throttle= "), Serial.print(data.throttle);
+    Serial.print(" Yaw= "), Serial.print(data.yaw);
+    Serial.print(" Pitch= "), Serial.print(data.pitch);
+    Serial.print(" Roll= "), Serial.print(data.roll);
+    Serial.print(" AUX1= "), Serial.print(data.AUX1);
+    Serial.print(" AUX2= "), Serial.print(data.AUX2);
+    Serial.print(" Pot1= "), Serial.println(data.pot1);
+    //Serial.print(" Pot2= "), Serial.print(data.pot1);
+
+    radio.write(&data, sizeof(MyData));
   }
-
-
-
-
-
-  if (digitalRead(mode_in) && mode_button_pressed) {
-    mode_button_pressed = false;
-    sound_changed = false;
-    counter = 0;
-    invert_counter = 0;
-  }
-
-
-  //Mode select
-  if (!mode) {
-    throttle_to_send = map_normal(analogRead(throttle_in), 0, 512, 1023, throttle_inverted);
-    yaw_to_send = map_normal(analogRead(yaw_in), 0, 512, 1023, yaw_inverted);
-    pitch_to_send = map_normal(analogRead(pitch_in), 0, 512, 1023, pitch_inverted);
-    roll_to_send = map_normal(analogRead(roll_in), 0, 512, 1023, roll_inverted);
-  }
-
-  if (mode) {
-    throttle_to_send = map_exponential(analogRead(throttle_in), throttle_inverted);
-    yaw_to_send = map_exponential(analogRead(yaw_in), yaw_inverted);
-    pitch_to_send = map_exponential(analogRead(pitch_in), pitch_inverted);
-    roll_to_send = map_exponential(analogRead(roll_in), roll_inverted);
-  }
-
-
-  throttle_to_send = throttle_to_send + throttle_fine - 127;
-  yaw_to_send = yaw_to_send + yaw_fine - 127;
-  pitch_to_send = pitch_to_send + pitch_fine - 127;
-  roll_to_send = roll_to_send + roll_fine - 127;
-
-
-  data.throttle = constrain(throttle_to_send, 0, 255);
-  data.yaw = constrain(yaw_to_send, 0, 255);
-  data.pitch = constrain(pitch_to_send, 0, 255);
-  data.roll = constrain(roll_to_send, 0, 255);
-  data.AUX1 = digitalRead(toggle_1);
-  data.AUX2 = digitalRead(toggle_2);
-
-  radio.write(&data, sizeof(MyData));
 }
