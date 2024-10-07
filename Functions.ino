@@ -12,23 +12,18 @@ void resetData() {
 }
 
 
-// int map_normal(int val, int lower, int middle, int upper, bool reverse) {
-//   val = constrain(val, lower, upper);
-//   if (val < middle)
-//     val = map(val, lower, middle, 0, 128);
-//   else
-//     val = map(val, middle, upper, 128, 255);
-//   return (reverse ? 255 - val : val);
+// int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int deadzone_low, int deadzone_high, int fine = 0) {
+//   if (input >= deadzone_low && input <= deadzone_high) {
+//     return 127;
+//   }
+//   int mappedValue = map(input, in_min, in_max, out_min, out_max);
+//   mappedValue = mappedValue + fine;
+//   return constrain(mappedValue, out_min, out_max);
 // }
 
-
-// // Returns a corrected value for a joystick position that takes into account
-// // the values of the outer extents and the middle of the joystick range.
-// int map_exponential(int val, bool reverse) {
-//   val = constrain(val, 0, 1023);
-//   float cube = ((pow((val - 512), 3) / 520200) + 258.012) / 2;
-//   return (reverse ? 255 - cube : cube);
-// }
+float lowPassFilter(float previousValue, float newValue, float alpha) {
+  return (alpha * newValue) + ((1 - alpha) * previousValue);
+}
 
 
 
@@ -46,4 +41,15 @@ void melody1() {
   digitalWrite(buzzer, HIGH);
   delay(50);
   digitalWrite(buzzer, LOW);
+}
+
+void BlinkLed(int time, int count) {
+  for (int i = 1; i <= count; i++) {
+    digitalWrite(led, LOW);
+    delay(time);
+    digitalWrite(led, HIGH);
+    if (i != count) {
+      delay(time);
+    }
+  }
 }

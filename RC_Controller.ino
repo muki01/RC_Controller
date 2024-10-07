@@ -8,6 +8,15 @@
 BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
 bool BluetoothModee = false;
 
+int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine = 0) {
+  if (input >= deadzone_low && input <= deadzone_high) {
+    return center;
+  }
+  int mappedValue = map(input, in_min, in_max, out_min, out_max);
+  mappedValue = mappedValue + fine;
+  return constrain(mappedValue, out_min, out_max);
+}
+
 //Inputs outputs
 #define throttle_in 0
 #define yaw_in 4
@@ -94,9 +103,10 @@ void setup() {
     bleGamepad.begin();
   }
 
-  yaw_fine = 4;
-  pitch_fine= 7;
-  roll_fine = -10;
+  // throttle_fine = -10;
+  // yaw_fine = 20;
+  // pitch_fine = 9;
+  // roll_fine = -20;
 }
 
 
@@ -123,17 +133,11 @@ void loop() {
   if (BluetoothModee) {
     if (bleGamepad.isConnected()) {
 
-      int throttle_data = map(analogRead(throttle_in), 1300, 3400, 0, 32767);
-      int yaw_data = map(analogRead(yaw_in), 400, 3500, 0, 32767);
-      int pitch_data = map(analogRead(pitch_in), 600, 3300, 0, 32767);
-      int roll_data = map(analogRead(roll_in), 300, 3300, 32767, 0);
-      int pot1_data = map(analogRead(pot1_in), 0, 4095, 32767, 0);
-
-      int mapThrottle = constrain(throttle_data, 0, 32767);
-      int mapYaw = constrain(yaw_data, 0, 32767);
-      int mapPitch = constrain(pitch_data, 0, 32767);
-      int mapRoll = constrain(roll_data, 0, 32767);
-      int mapPot1 = constrain(pot1_data, 0, 32767);
+      int mapThrottle = mapConstrain(analogRead(throttle_in), 1300, 3400, 0, 32767, 16383, 2250, 2450, throttle_fine);
+      int mapYaw = mapConstrain(analogRead(yaw_in), 400, 3500, 0, 32767, 16383, 1850, 2050, yaw_fine);
+      int mapPitch = mapConstrain(analogRead(pitch_in), 600, 3300, 0, 32767, 16383, 1850, 2050, pitch_fine);
+      int mapRoll = mapConstrain(analogRead(roll_in), 300, 3300, 32767, 0, 16383, 1400, 1600, roll_fine);
+      int mapPot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 32767, 0, 16383, 2048, 2048);
       int AUX1 = digitalRead(toggle_1);
       int AUX2 = digitalRead(toggle_2);
 
@@ -272,25 +276,12 @@ void loop() {
       invert_counter = invert_counter + 1;
     }
 
-
-    throttle_to_send = map(analogRead(throttle_in), 1300, 3400, 255, 0);
-    yaw_to_send = map(analogRead(yaw_in), 400, 3500, 0, 255);
-    pitch_to_send = map(analogRead(pitch_in), 600, 3300, 0, 255);
-    roll_to_send = map(analogRead(roll_in), 300, 3300, 255, 0);
-    pot1_to_send = map(analogRead(pot1_in), 0, 4095, 255, 0);
-    //pot2_to_send = map(analogRead(pot2_in), 0, 4095, 255, 0);
-
-    throttle_to_send = throttle_to_send + throttle_fine;
-    yaw_to_send = yaw_to_send + yaw_fine;
-    pitch_to_send = pitch_to_send + pitch_fine;
-    roll_to_send = roll_to_send + roll_fine;
-
-    data.throttle = constrain(throttle_to_send, 0, 255);
-    data.yaw = constrain(yaw_to_send, 0, 255);
-    data.pitch = constrain(pitch_to_send, 0, 255);
-    data.roll = constrain(roll_to_send, 0, 255);
-    data.pot1 = constrain(pot1_to_send, 0, 255);
-    //data.pot2 = constrain(pot2_to_send, 0, 255);
+    data.throttle = mapConstrain(analogRead(throttle_in), 1300, 3400, 255, 0, 127, 2250, 2450, throttle_fine);
+    data.yaw = mapConstrain(analogRead(yaw_in), 400, 3500, 0, 255, 127, 1850, 2050, yaw_fine);
+    data.pitch = mapConstrain(analogRead(pitch_in), 600, 3300, 0, 255, 127, 1850, 2050, pitch_fine);
+    data.roll = mapConstrain(analogRead(roll_in), 300, 3300, 255, 0, 127, 1400, 1600, roll_fine);
+    data.pot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 255, 0, 127, 2048, 2048);
+    //data.pot2 = mapConstrain(analogRead(pot1_in), 0, 4095, 255, 0, 127, 2048, 2048);
     data.AUX1 = !digitalRead(toggle_1);
     data.AUX2 = data.pot1;  //digitalRead(toggle_2);
 
