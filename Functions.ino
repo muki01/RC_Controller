@@ -12,14 +12,18 @@ void resetData() {
 }
 
 
-// int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int deadzone_low, int deadzone_high, int fine = 0) {
-//   if (input >= deadzone_low && input <= deadzone_high) {
-//     return 127;
-//   }
-//   int mappedValue = map(input, in_min, in_max, out_min, out_max);
-//   mappedValue = mappedValue + fine;
-//   return constrain(mappedValue, out_min, out_max);
-// }
+int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine) {
+  int mappedValue;
+  if (input >= deadzone_low && input <= deadzone_high) {
+    return center;
+  } else if (input < deadzone_low) {
+    mappedValue = map(input, in_min, deadzone_low, out_min, center);
+  } else if (input > deadzone_low) {
+    mappedValue = map(input, in_max, deadzone_high, out_max, center);
+  }
+  mappedValue = mappedValue + fine;
+  return constrain(mappedValue, min(out_min, out_max), max(out_min, out_max));
+}
 
 float lowPassFilter(float previousValue, float newValue, float alpha) {
   return (alpha * newValue) + ((1 - alpha) * previousValue);

@@ -3,23 +3,8 @@
 #include <RF24.h>
 #include <Wire.h>
 #include <SPIFFS.h>
-
 #include <BleGamepad.h>
 BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
-bool BluetoothModee = false;
-
-int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine = 0) {
-  int mappedValue; 
-  if (input >= deadzone_low && input <= deadzone_high) {
-    return center;
-  }else if(input < deadzone_low){
-    mappedValue = map(input, in_min, deadzone_low, out_min, center);
-  }else if(input > deadzone_low){
-    mappedValue = map(input, in_max, deadzone_high, out_max, center);
-  }
-  mappedValue = mappedValue + fine;
-  return constrain(mappedValue, min(out_min, out_max), max(out_min, out_max));
-}
 
 //Inputs outputs
 #define throttle_in 0
@@ -68,10 +53,10 @@ bool throttle_inverted = true, yaw_inverted = true, pitch_inverted = true, roll_
 bool throttle_decrease = false, yaw_decrease = false, pitch_decrease = false, roll_decrease = false;
 bool throttle_increase = false, yaw_increase = false, pitch_increase = false, roll_increase = false;
 
-bool sound = true;
-int counter = 0;
-int invert_counter = 0;
-bool sound_changed = false;
+bool sound = true, sound_changed = false, BluetoothMode = false;
+int counter = 0, invert_counter = 0;
+
+int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine = 0);
 
 void setup() {
   Serial.begin(115200);
@@ -95,7 +80,7 @@ void setup() {
   startMelody();
 
   if (digitalRead(toggle_1)) {
-    BluetoothModee = false;
+    BluetoothMode = false;
     radio.begin();
     radio.setAutoAck(false);
     radio.setPALevel(RF24_PA_HIGH);
@@ -103,18 +88,10 @@ void setup() {
     radio.openWritingPipe(pipeOut);
     resetData();
   } else {
-    BluetoothModee = true;
+    BluetoothMode = true;
     bleGamepad.begin();
   }
 
-  // throttle_fine = -10;
-  // yaw_fine = 20;
-  // pitch_fine = 9;
-  // roll_fine = -20;
-}
-
-
-void loop() {
   // Serial.print("Throttle_fine= "), Serial.print(throttle_fine);
   // Serial.print(" Yaw_fine= "), Serial.print(yaw_fine);
   // Serial.print(" Pitch_fine= "), Serial.print(pitch_fine);
@@ -124,6 +101,14 @@ void loop() {
   // Serial.print(" Pitch_inverted= "), Serial.print(pitch_inverted);
   // Serial.print(" Roll_inverted= "), Serial.print(roll_inverted);
 
+  // throttle_fine = -10;
+  // yaw_fine = 20;
+  // pitch_fine = 9;
+  // roll_fine = -20;
+}
+
+
+void loop() {
   //battery read
   battery_level = (double)analogRead(battery_in) / 4096 * 10.0;
   battery_level = round(battery_level * 10) / 10;
@@ -134,7 +119,7 @@ void loop() {
     analogWrite(led, 0);
   }
 
-  if (BluetoothModee) {
+  if (BluetoothMode) {
     if (bleGamepad.isConnected()) {
 
       int mapThrottle = mapConstrain(analogRead(throttle_in), 1400, 3200, 0, 32767, 16383, 2400, 2400, throttle_fine);
@@ -144,6 +129,14 @@ void loop() {
       int mapPot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 32767, 0, 16383, 2048, 2048);
       int AUX1 = digitalRead(toggle_1);
       int AUX2 = digitalRead(toggle_2);
+
+      Serial.print("Bluetooth Throttle= "), Serial.print(mapThrottle);
+      Serial.print(" Yaw= "), Serial.print(mapYaw);
+      Serial.print(" Pitch= "), Serial.print(mapPitch);
+      Serial.print(" Roll= "), Serial.print(mapRoll);
+      Serial.print(" AUX1= "), Serial.print(AUX1);
+      Serial.print(" AUX2= "), Serial.print(AUX2);
+      Serial.print(" Pot1= "), Serial.println(mapPot1);
 
       if (!AUX1)
         bleGamepad.press(BUTTON_1);
@@ -159,8 +152,7 @@ void loop() {
     }
   } else {
 
-    //Buttons read
-    button_read = 0;  //analogRead(buttons_analog_in);
+    //analogRead(buttons_analog_in);
     //Serial.print("Btn= "), Serial.print(button_read);
 
     //Reset buttons
@@ -175,20 +167,6 @@ void loop() {
       roll_increase = false;
     }
 
-    //------------------------------------YAW buttons------------------------------------
-    if (button_read < 260 && button_read > 200 && !yaw_decrease) {
-      yaw_fine = yaw_fine + 1;
-      yaw_decrease = true;
-      updateValue("yaw_fine", yaw_fine);
-      sound ? melody1() : (void)0;
-    }
-    if (button_read < 120 && button_read > 50 && !yaw_increase) {
-      yaw_fine = yaw_fine - 1;
-      yaw_increase = true;
-      updateValue("yaw_fine", yaw_fine);
-      sound ? melody1() : (void)0;
-    }
-
     //------------------------------------THROTTLE buttons------------------------------------
     if (button_read < 500 && button_read > 430 && !throttle_decrease) {
       throttle_fine = throttle_fine + 1;
@@ -200,6 +178,20 @@ void loop() {
       throttle_fine = throttle_fine - 1;
       throttle_increase = true;
       updateValue("throttle_fine", throttle_fine);
+      sound ? melody1() : (void)0;
+    }
+
+    //------------------------------------YAW buttons------------------------------------
+    if (button_read < 260 && button_read > 200 && !yaw_decrease) {
+      yaw_fine = yaw_fine + 1;
+      yaw_decrease = true;
+      updateValue("yaw_fine", yaw_fine);
+      sound ? melody1() : (void)0;
+    }
+    if (button_read < 120 && button_read > 50 && !yaw_increase) {
+      yaw_fine = yaw_fine - 1;
+      yaw_increase = true;
+      updateValue("yaw_fine", yaw_fine);
       sound ? melody1() : (void)0;
     }
 
