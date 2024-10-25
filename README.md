@@ -16,21 +16,23 @@ This project is an ESP32-based RC controller that allows you to control RC drone
   ~~~
 * Edit the pins for your Board
      ~~~
-      #define throttle_in 0
+      #define throttle_in 2
       #define yaw_in 4
       #define pitch_in 34
       #define roll_in 39
-      
+
       #define pot1_in 35
-      #define pot2_in 12
+      #define pot2_in 15
       #define toggle_1 32
-      #define toggle_2 15
-      
+      #define toggle_2 12
+      #define switch_1 22
+      #define switch_2 36
+
       #define battery_in 33
       #define buttons_analog_in 27
-      #define buzzer 22
-      #define led 2
-      
+      #define buzzer 12
+      #define led 0
+
       #define ce_Pin 17
       #define csnPin 5
      ~~~
