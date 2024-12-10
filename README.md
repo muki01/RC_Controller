@@ -1,9 +1,12 @@
 # 🛩️RC Controller
 This project is an ESP32-based RC controller that allows you to control RC drones via the NRF24 module and also use it for drone simulators on a PC through Bluetooth.
 
+The controller features 10 channels, providing ample flexibility for controlling complex drones or adding custom functionalities.
+
 Тhe controller is not quite ready. I will add more features.
 
 ## Features:
+- 10-Channel Control: Offers 10 independent control channels, making it suitable for advanced drone configurations and additional peripherals.
 - NRF24 Communication: Control real RC drones wirelessly using the NRF24L01 module.
 - Bluetooth Connectivity: Seamlessly connect the controller to your computer for use with drone simulators, providing a realistic flying experience.
 - Customizable: Modify and expand the code to suit your specific needs, whether for different types of drones or simulators.
