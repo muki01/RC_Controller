@@ -29,6 +29,13 @@ float lowPassFilter(float previousValue, float newValue, float alpha) {
   return (alpha * newValue) + ((1 - alpha) * previousValue);
 }
 
+void handleButtonPress(int input, int button) {
+  if (!input)
+    bleGamepad.press(button);
+  else
+    bleGamepad.release(button);
+}
+
 
 
 void startMelody() {
