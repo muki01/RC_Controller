@@ -6,6 +6,8 @@
 #include <BleGamepad.h>
 BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
 
+#define MP3_Player Serial2
+
 //Inputs outputs
 #define throttle_in 33
 #define yaw_in 4
@@ -61,6 +63,11 @@ bool throttle_inverted = true, yaw_inverted = true, pitch_inverted = true, roll_
 bool throttle_decrease = false, yaw_decrease = false, pitch_decrease = false, roll_decrease = false;
 bool throttle_increase = false, yaw_increase = false, pitch_increase = false, roll_increase = false;
 
+bool previousAUX1 = LOW;
+bool previousAUX2 = LOW;
+bool previousAUX3 = LOW;
+bool previousAUX4 = LOW;
+
 bool sound = true, sound_changed = false, BluetoothMode = false;
 int counter = 0, invert_counter = 0;
 
@@ -68,6 +75,9 @@ int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, in
 
 void setup() {
   Serial.begin(115200);
+  delay(600);
+  MP3_Player.begin(9600, SERIAL_8N1, 2, 0);
+
   initSpiffs();
   readSettings();
 
@@ -89,13 +99,16 @@ void setup() {
   pinMode(buzzer, OUTPUT);
   pinMode(led, OUTPUT);
 
-  startMelody();
-
   if (digitalRead(toggle_1)) {
+    while (analogRead(throttle_in) <= 3200 || digitalRead(toggle_1) == 0 || digitalRead(toggle_2) == 0 || digitalRead(toggle_3) == 0 || digitalRead(toggle_4) == 0) {
+      MP3_Player_playTrack(1);
+      delay(3000);
+    }
+    MP3_Player_playTrack(8);
     BluetoothMode = false;
     radio.begin();
     radio.setAutoAck(false);
-    radio.setPALevel(RF24_PA_HIGH);
+    radio.setPALevel(RF24_PA_MAX);
     radio.setDataRate(RF24_250KBPS);
     radio.openWritingPipe(pipeOut);
     resetData();
@@ -291,7 +304,7 @@ void loop() {
 
     data.throttle = mapConstrain(analogRead(throttle_in), 200, 3100, 255, 0, 127, 1650, 1650, throttle_fine);
     data.yaw = mapConstrain(analogRead(yaw_in), 400, 3500, 0, 255, 127, 1840, 1960, yaw_fine);
-    data.pitch = mapConstrain(analogRead(pitch_in), 300, 3100, 0, 255, 127, 1650, 1710, pitch_fine);
+    data.pitch = mapConstrain(analogRead(pitch_in), 300, 3100, 0, 255, 127, 1660, 1750, pitch_fine);
     data.roll = mapConstrain(analogRead(roll_in), 300, 3300, 255, 0, 127, 1650, 1750, roll_fine);
     data.pot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 255, 0, 127, 2048, 2048);
     data.pot2 = mapConstrain(analogRead(pot2_in), 0, 4095, 255, 0, 127, 2048, 2048);
@@ -299,6 +312,40 @@ void loop() {
     data.AUX2 = !digitalRead(toggle_2);
     data.AUX3 = !digitalRead(toggle_3);
     data.AUX4 = !digitalRead(toggle_4);
+
+    if (data.AUX1 != previousAUX1) {
+      if (data.AUX1 == HIGH) {
+        MP3_Player_playTrack(2);
+      } else {
+        MP3_Player_playTrack(3);
+      }
+      previousAUX1 = data.AUX1;
+    }
+
+    if (data.AUX2 != previousAUX2) {
+      if (data.AUX2 == HIGH) {
+        MP3_Player_playTrack(6);
+      } else {
+        MP3_Player_playTrack(0);
+      }
+      previousAUX2 = data.AUX2;
+    }
+    if (data.AUX3 != previousAUX3) {
+      if (data.AUX3 == HIGH) {
+        //MP3_Player_playTrack(1);
+      } else {
+        //MP3_Player_playTrack(1);
+      }
+      previousAUX3 = data.AUX3;
+    }
+    if (data.AUX4 != previousAUX4) {
+      if (data.AUX4 == HIGH) {
+        MP3_Player_playTrack(5);
+      } else {
+        //MP3_Player_playTrack(4);
+      }
+      previousAUX4 = data.AUX4;
+    }
 
     Serial.print(" Throttle= "), Serial.print(data.throttle);
     Serial.print(" Yaw= "), Serial.print(data.yaw);
