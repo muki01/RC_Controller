@@ -3,7 +3,7 @@ void resetData() {
   // Throttle is 0 in order to stop the motors
   //127 is the middle value of the 10ADC.
 
-  data.throttle = 127;
+  data.throttle = 0;
   data.yaw = 127;
   data.pitch = 127;
   data.roll = 127;
@@ -36,23 +36,6 @@ void handleButtonPress(int input, int button) {
     bleGamepad.release(button);
 }
 
-
-
-void startMelody() {
-  digitalWrite(buzzer, HIGH);
-  delay(40);
-  digitalWrite(buzzer, LOW);
-  delay(40);
-  digitalWrite(buzzer, HIGH);
-  delay(40);
-  digitalWrite(buzzer, LOW);
-}
-
-void melody1() {
-  digitalWrite(buzzer, HIGH);
-  delay(50);
-  digitalWrite(buzzer, LOW);
-}
 
 void BlinkLed(int time, int count) {
   for (int i = 1; i <= count; i++) {

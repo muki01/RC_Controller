@@ -7,6 +7,8 @@
 BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
 
 #define MP3_Player Serial2
+#define MP3_Player_RX 2
+#define MP3_Player_TX 0
 
 //Inputs outputs
 #define throttle_in 33
@@ -27,7 +29,6 @@ BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
 
 #define battery_in 13
 #define buttons_analog_in 12
-#define buzzer 15
 #define led 2
 
 #define ce_Pin 17
@@ -76,7 +77,7 @@ int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, in
 void setup() {
   Serial.begin(115200);
   delay(600);
-  MP3_Player.begin(9600, SERIAL_8N1, 2, 0);
+  MP3_Player.begin(9600, SERIAL_8N1, MP3_Player_RX, MP3_Player_TX);
 
   initSpiffs();
   readSettings();
@@ -321,7 +322,6 @@ void loop() {
       }
       previousAUX1 = data.AUX1;
     }
-
     if (data.AUX2 != previousAUX2) {
       if (data.AUX2 == HIGH) {
         MP3_Player_playTrack(6);
