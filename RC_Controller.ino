@@ -114,6 +114,7 @@ void setup() {
     radio.openWritingPipe(pipeOut);
     resetData();
   } else {
+    MP3_Player_playTrack(9);
     BluetoothMode = true;
     bleGamepad.begin();
   }
@@ -326,13 +327,13 @@ void loop() {
       if (data.AUX2 == HIGH) {
         MP3_Player_playTrack(6);
       } else {
-        MP3_Player_playTrack(0);
+        MP3_Player_playTrack(7);
       }
       previousAUX2 = data.AUX2;
     }
     if (data.AUX3 != previousAUX3) {
       if (data.AUX3 == HIGH) {
-        //MP3_Player_playTrack(1);
+        MP3_Player_playTrack(4);
       } else {
         //MP3_Player_playTrack(1);
       }
