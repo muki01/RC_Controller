@@ -116,7 +116,12 @@ void setup() {
   } else {
     MP3_Player_playTrack(9);
     BluetoothMode = true;
-    bleGamepad.begin();
+    BleGamepadConfiguration bleGamepadConfig;
+    //bleGamepadConfig.setControllerType(CONTROLLER_TYPE_MULTI_AXIS); // CONTROLLER_TYPE_JOYSTICK, CONTROLLER_TYPE_GAMEPAD (DEFAULT), CONTROLLER_TYPE_MULTI_AXIS
+    bleGamepadConfig.setWhichAxes(true, true, true, true, true, true, false, false);  // X,Y,Z,RX,RY,RZ,Slider1,Slider2
+    bleGamepadConfig.setButtonCount(4);
+    bleGamepadConfig.setHatSwitchCount(0);
+    bleGamepad.begin(&bleGamepadConfig);
   }
 
   // Serial.print("Throttle_fine= "), Serial.print(throttle_fine);
