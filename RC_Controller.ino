@@ -55,7 +55,7 @@ struct MyData {
 MyData data;
 
 //Variables
-float battery_level = 0;
+float batteryLevel = 0;
 int button_read = 0;
 
 int throttle_fine = 0, yaw_fine = 0, pitch_fine = 0, roll_fine = 0;
@@ -69,14 +69,24 @@ bool previousAUX2 = LOW;
 bool previousAUX3 = LOW;
 bool previousAUX4 = LOW;
 
-bool sound = true, sound_changed = false, BluetoothMode = false;
+// Flags for each battery level
+bool warningFull = false;      // Full battery warning flag
+bool warningHigh = false;      // High battery warning flag
+bool warningMedium = false;    // Medium battery warning flag
+bool warningLow = false;       // Low battery warning flag
+bool warningVeryLow = false;   // Very low battery warning flag
+bool warningCritical = false;  // Critical battery warning flag
+
+void melody1();
+
+bool sound = true, BluetoothMode = false;
 int counter = 0, invert_counter = 0;
 
 int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine = 0);
 
 void setup() {
   Serial.begin(115200);
-  delay(600);
+  delay(700);
   MP3_Player.begin(9600, SERIAL_8N1, MP3_Player_RX, MP3_Player_TX);
 
   initSpiffs();
@@ -97,7 +107,6 @@ void setup() {
 
   pinMode(battery_in, INPUT);
   pinMode(buttons_analog_in, INPUT);
-  pinMode(buzzer, OUTPUT);
   pinMode(led, OUTPUT);
 
   if (digitalRead(toggle_1)) {
@@ -109,6 +118,7 @@ void setup() {
     beginNRF24();
     resetData();
     MP3_Player_playTrack(8);
+    delay(1600);
   } else {
     MP3_Player_playTrack(9);
     delay(1600);
@@ -133,15 +143,7 @@ void setup() {
 
 
 void loop() {
-  //battery read
-  battery_level = (double)analogRead(battery_in) / 4096 * 10.0;
-  battery_level = round(battery_level * 10) / 10;
-
-  if (battery_level >= 4.5 && battery_level <= 5.5) {
-    analogWrite(led, 20);
-  } else {
-    analogWrite(led, 0);
-  }
+  battery();
   buttons();
 
   if (BluetoothMode) {
