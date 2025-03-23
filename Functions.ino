@@ -19,32 +19,32 @@ void battery() {
   batteryLevel = (double)analogRead(battery_in) / 4096 * 10.0;
   batteryLevel = round(batteryLevel * 10) / 10;
 
-  if (batteryLevel >= 5.9 && !warningFull) {
+  if (batteryLevel >= 8.1 && !warningFull) {
     Serial.print("Battery is full. Ready to go! ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(12);
     warningFull = true;  // Set the warning flag to true
-  } else if (batteryLevel >= 5.6 && batteryLevel < 5.9 && !warningHigh) {
+  } else if (batteryLevel >= 7.6 && batteryLevel < 8.1 && !warningHigh) {
     Serial.print("Battery level is high. No need to charge. ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(13);
     warningHigh = true;  // Set the warning flag to true
-  } else if (batteryLevel >= 4.8 && batteryLevel < 5.6 && !warningMedium) {
+  } else if (batteryLevel >= 7.3 && batteryLevel < 7.6 && !warningMedium) {
     Serial.print("Battery level is medium. Consider charging soon. ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(14);
     warningMedium = true;  // Set the warning flag to true
-  } else if (batteryLevel >= 4.2 && batteryLevel < 4.8 && !warningLow) {
+  } else if (batteryLevel >= 6.9 && batteryLevel < 7.3 && !warningLow) {
     Serial.print("Warning! Battery level is low. Charge when possible. ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(15);
     warningLow = true;  // Set the warning flag to true
-  } else if (batteryLevel >= 3.5 && batteryLevel < 4.2 && !warningVeryLow) {
+  } else if (batteryLevel >= 6.7 && batteryLevel < 6.9 && !warningVeryLow) {
     Serial.print("Critical warning! Battery is very low. Charge immediately! ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(10);
     warningVeryLow = true;  // Set the warning flag to true
-  } else if (batteryLevel < 3.5 && !warningCritical) {
+  } else if (batteryLevel < 6.7 && !warningCritical) {
     Serial.print("Battery is about to die! Shutting down soon!");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(11);
