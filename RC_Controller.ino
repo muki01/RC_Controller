@@ -4,7 +4,9 @@
 #include <Wire.h>
 #include <SPIFFS.h>
 #include <BleGamepad.h>
+#include <Smoothed.h>
 BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
+Smoothed<float> smoothedBatteryLevel;
 
 #define MP3_Player Serial2
 #define MP3_Player_RX 2
@@ -88,6 +90,7 @@ int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, in
 
 void setup() {
   Serial.begin(115200);
+  smoothedBatteryLevel.begin(SMOOTHED_AVERAGE, 40);
   delay(700);
   MP3_Player.begin(9600, SERIAL_8N1, MP3_Player_RX, MP3_Player_TX);
 

@@ -16,8 +16,9 @@ void beginBluetooth() {
 };
 
 void battery() {
-  batteryLevel = (double)analogRead(battery_in) / 4096 * 10.0;
-  batteryLevel = round(batteryLevel * 10) / 10;
+  float battery = (double)analogRead(battery_in) / 4096.0 * 9.6;
+  smoothedBatteryLevel.add(battery);
+  batteryLevel = smoothedBatteryLevel.get();
 
   if (batteryLevel >= 8.1 && !warningFull) {
     Serial.print("Battery is full. Ready to go! ");
