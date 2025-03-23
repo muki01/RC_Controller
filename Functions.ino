@@ -9,7 +9,7 @@ void beginNRF24() {
 void beginBluetooth() {
   BleGamepadConfiguration bleGamepadConfig;
   //bleGamepadConfig.setControllerType(CONTROLLER_TYPE_MULTI_AXIS); // CONTROLLER_TYPE_JOYSTICK, CONTROLLER_TYPE_GAMEPAD (DEFAULT), CONTROLLER_TYPE_MULTI_AXIS
-  bleGamepadConfig.setWhichAxes(true, true, true, true, true, true, false, false);  // X,Y,Z,RX,RY,RZ,Slider1,Slider2
+  bleGamepadConfig.setWhichAxes(true, true, false, true, true, false, true, true);  // X,Y,Z,RX,RY,RZ,Slider1,Slider2
   bleGamepadConfig.setButtonCount(4);
   bleGamepadConfig.setHatSwitchCount(0);
   bleGamepad.begin(&bleGamepadConfig);
@@ -210,7 +210,7 @@ float lowPassFilter(float previousValue, float newValue, float alpha) {
 }
 
 void handleButtonPress(int input, int button) {
-  if (!input)
+  if (input)
     bleGamepad.press(button);
   else
     bleGamepad.release(button);

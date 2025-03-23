@@ -169,7 +169,7 @@ void loop() {
       handleButtonPress(AUX3, BUTTON_3);
       handleButtonPress(AUX4, BUTTON_4);
 
-      bleGamepad.setAxes(mapYaw, mapThrottle, mapPitch, mapRoll, mapPot1, mapPot2, 32767, 32767);
+      bleGamepad.setAxes(Yaw, Throttle, 32767, Roll, Pitch, 32767, Pot1, Pot2);
     }
   } else {
 
