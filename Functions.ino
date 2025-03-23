@@ -51,114 +51,131 @@ void battery() {
     warningCritical = true;  // Set the warning flag to true
   }
 }
-void buttons(){
+
+void printData() {
+  Serial.print(" Throttle= "), Serial.print(Throttle);
+  Serial.print(" Yaw= "), Serial.print(Yaw);
+  Serial.print(" Pitch= "), Serial.print(Pitch);
+  Serial.print(" Roll= "), Serial.print(Roll);
+  Serial.print(" Pot1= "), Serial.print(Pot1);
+  Serial.print(" Pot2= "), Serial.print(Pot2);
+  Serial.print(" AUX1= "), Serial.print(AUX1);
+  Serial.print(" AUX2= "), Serial.print(AUX2);
+  Serial.print(" AUX3= "), Serial.print(AUX3);
+  Serial.print(" AUX4= "), Serial.print(AUX4);
+  Serial.print(" Switch1= "), Serial.print(Switch1);
+  Serial.print(" Switch2= "), Serial.print(Switch2);
+  Serial.print(" Battery= "), Serial.println(batteryLevel);
+}
+
+void buttons() {
   //analogRead(buttons_analog_in);
-    //Serial.print("Btn= "), Serial.print(button_read);
+  //Serial.print("Btn= "), Serial.print(button_read);
 
-    //Reset buttons
-    if (button_read > 820) {
-      yaw_decrease = false;
-      throttle_decrease = false;
-      pitch_decrease = false;
-      roll_decrease = false;
-      yaw_increase = false;
-      throttle_increase = false;
-      pitch_increase = false;
-      roll_increase = false;
-    }
+  //Reset buttons
+  if (button_read > 820) {
+    yaw_decrease = false;
+    throttle_decrease = false;
+    pitch_decrease = false;
+    roll_decrease = false;
+    yaw_increase = false;
+    throttle_increase = false;
+    pitch_increase = false;
+    roll_increase = false;
+  }
 
-    //------------------------------------THROTTLE buttons------------------------------------
-    if (button_read < 500 && button_read > 430 && !throttle_decrease) {
-      throttle_fine = throttle_fine + 1;
-      throttle_decrease = true;
-      updateValue("throttle_fine", throttle_fine);
-    }
-    if (button_read < 380 && button_read > 320 && !throttle_increase) {
-      throttle_fine = throttle_fine - 1;
-      throttle_increase = true;
-      updateValue("throttle_fine", throttle_fine);
-    }
+  //------------------------------------THROTTLE buttons------------------------------------
+  if (button_read < 500 && button_read > 430 && !throttle_decrease) {
+    throttle_fine = throttle_fine + 1;
+    throttle_decrease = true;
+    updateValue("throttle_fine", throttle_fine);
+  }
+  if (button_read < 380 && button_read > 320 && !throttle_increase) {
+    throttle_fine = throttle_fine - 1;
+    throttle_increase = true;
+    updateValue("throttle_fine", throttle_fine);
+  }
 
-    //------------------------------------YAW buttons------------------------------------
-    if (button_read < 260 && button_read > 200 && !yaw_decrease) {
-      yaw_fine = yaw_fine + 1;
-      yaw_decrease = true;
-      updateValue("yaw_fine", yaw_fine);
-    }
-    if (button_read < 120 && button_read > 50 && !yaw_increase) {
-      yaw_fine = yaw_fine - 1;
-      yaw_increase = true;
-      updateValue("yaw_fine", yaw_fine);
-    }
+  //------------------------------------YAW buttons------------------------------------
+  if (button_read < 260 && button_read > 200 && !yaw_decrease) {
+    yaw_fine = yaw_fine + 1;
+    yaw_decrease = true;
+    updateValue("yaw_fine", yaw_fine);
+  }
+  if (button_read < 120 && button_read > 50 && !yaw_increase) {
+    yaw_fine = yaw_fine - 1;
+    yaw_increase = true;
+    updateValue("yaw_fine", yaw_fine);
+  }
 
-    //------------------------------------PITCH buttons------------------------------------
-    if (button_read < 610 && button_read > 550 && !pitch_decrease) {
-      pitch_fine = pitch_fine + 1;
-      pitch_decrease = true;
-      updateValue("pitch_fine", pitch_fine);
-    }
-    if (button_read < 690 && button_read > 630 && !pitch_increase) {
-      pitch_fine = pitch_fine - 1;
-      pitch_increase = true;
-      updateValue("pitch_fine", pitch_fine);
-    }
+  //------------------------------------PITCH buttons------------------------------------
+  if (button_read < 610 && button_read > 550 && !pitch_decrease) {
+    pitch_fine = pitch_fine + 1;
+    pitch_decrease = true;
+    updateValue("pitch_fine", pitch_fine);
+  }
+  if (button_read < 690 && button_read > 630 && !pitch_increase) {
+    pitch_fine = pitch_fine - 1;
+    pitch_increase = true;
+    updateValue("pitch_fine", pitch_fine);
+  }
 
-    //------------------------------------ROLL buttons------------------------------------
-    if (button_read < 820 && button_read > 760 && !roll_decrease) {
-      roll_fine = roll_fine + 1;
-      roll_decrease = true;
-      updateValue("roll_fine", roll_fine);
-    }
-    if (button_read < 760 && button_read > 700 && !roll_increase) {
-      roll_fine = roll_fine - 1;
-      roll_increase = true;
-      updateValue("roll_fine", roll_fine);
-    }
+  //------------------------------------ROLL buttons------------------------------------
+  if (button_read < 820 && button_read > 760 && !roll_decrease) {
+    roll_fine = roll_fine + 1;
+    roll_decrease = true;
+    updateValue("roll_fine", roll_fine);
+  }
+  if (button_read < 760 && button_read > 700 && !roll_increase) {
+    roll_fine = roll_fine - 1;
+    roll_increase = true;
+    updateValue("roll_fine", roll_fine);
+  }
 
-    //Invert channels
-    //------------------------------------THROTTLE INVERT------------------------------------
-    if (button_read < 500 && button_read > 430) {
-      if (invert_counter > 30) {
-        throttle_inverted = !throttle_inverted;
-        invert_counter = 0;
-        updateValueBool("throttle_inverted", throttle_inverted);
-        delay(1500);
-      }
-      invert_counter = invert_counter + 1;
+  //Invert channels
+  //------------------------------------THROTTLE INVERT------------------------------------
+  if (button_read < 500 && button_read > 430) {
+    if (invert_counter > 30) {
+      throttle_inverted = !throttle_inverted;
+      invert_counter = 0;
+      updateValueBool("throttle_inverted", throttle_inverted);
+      delay(1500);
     }
+    invert_counter = invert_counter + 1;
+  }
 
-    //------------------------------------YAW INVERT------------------------------------
-    if (button_read < 260 && button_read > 200) {
-      if (invert_counter > 30) {
-        yaw_inverted = !yaw_inverted;
-        invert_counter = 0;
-        updateValueBool("yaw_inverted", yaw_inverted);
-        delay(1500);
-      }
-      invert_counter = invert_counter + 1;
+  //------------------------------------YAW INVERT------------------------------------
+  if (button_read < 260 && button_read > 200) {
+    if (invert_counter > 30) {
+      yaw_inverted = !yaw_inverted;
+      invert_counter = 0;
+      updateValueBool("yaw_inverted", yaw_inverted);
+      delay(1500);
     }
+    invert_counter = invert_counter + 1;
+  }
 
-    //------------------------------------PITCH INVERT------------------------------------
-    if (button_read < 610 && button_read > 550) {
-      if (invert_counter > 30) {
-        pitch_inverted = !pitch_inverted;
-        invert_counter = 0;
-        updateValueBool("pitch_inverted", pitch_inverted);
-        delay(1500);
-      }
-      invert_counter = invert_counter + 1;
+  //------------------------------------PITCH INVERT------------------------------------
+  if (button_read < 610 && button_read > 550) {
+    if (invert_counter > 30) {
+      pitch_inverted = !pitch_inverted;
+      invert_counter = 0;
+      updateValueBool("pitch_inverted", pitch_inverted);
+      delay(1500);
     }
+    invert_counter = invert_counter + 1;
+  }
 
-    //------------------------------------ROLL INVERT------------------------------------
-    if (button_read < 820 && button_read > 760) {
-      if (invert_counter > 30) {
-        roll_inverted = !roll_inverted;
-        invert_counter = 0;
-        updateValueBool("roll_inverted", roll_inverted);
-        delay(1500);
-      }
-      invert_counter = invert_counter + 1;
+  //------------------------------------ROLL INVERT------------------------------------
+  if (button_read < 820 && button_read > 760) {
+    if (invert_counter > 30) {
+      roll_inverted = !roll_inverted;
+      invert_counter = 0;
+      updateValueBool("roll_inverted", roll_inverted);
+      delay(1500);
     }
+    invert_counter = invert_counter + 1;
+  }
 }
 
 void resetData() {

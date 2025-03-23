@@ -19,13 +19,13 @@ BleGamepad bleGamepad("Flight Controller", "Muki01", 100);
 #define pot1_in 35
 #define pot2_in 25
 
-#define toggle_1 32
-#define toggle_2 26
-#define toggle_3 14
-#define toggle_4 27
+#define toggle1_in 32
+#define toggle2_in 26
+#define toggle3_in 14
+#define toggle4_in 27
 
-#define switch_1 22
-#define switch_2 36
+#define switch1_in 22
+#define switch2_in 36
 
 #define battery_in 13
 #define buttons_analog_in 12
@@ -55,6 +55,8 @@ struct MyData {
 MyData data;
 
 //Variables
+int Throttle, Yaw, Pitch, Roll, Pot1, Pot2, AUX1, AUX2, AUX3, AUX4, Switch1, Switch2;
+
 float batteryLevel = 0;
 int button_read = 0;
 
@@ -98,19 +100,19 @@ void setup() {
   pinMode(roll_in, INPUT);
   pinMode(pot1_in, INPUT);
   pinMode(pot2_in, INPUT);
-  pinMode(toggle_1, INPUT_PULLUP);
-  pinMode(toggle_2, INPUT_PULLUP);
-  pinMode(toggle_3, INPUT_PULLUP);
-  pinMode(toggle_4, INPUT_PULLUP);
-  pinMode(switch_1, INPUT_PULLUP);
-  pinMode(switch_2, INPUT_PULLUP);
+  pinMode(toggle1_in, INPUT_PULLUP);
+  pinMode(toggle2_in, INPUT_PULLUP);
+  pinMode(toggle3_in, INPUT_PULLUP);
+  pinMode(toggle4_in, INPUT_PULLUP);
+  pinMode(switch1_in, INPUT_PULLUP);
+  pinMode(switch2_in, INPUT_PULLUP);
 
   pinMode(battery_in, INPUT);
   pinMode(buttons_analog_in, INPUT);
   pinMode(led, OUTPUT);
 
-  if (digitalRead(toggle_1)) {
-    while (analogRead(throttle_in) <= 3200 || digitalRead(toggle_1) == 0 || digitalRead(toggle_2) == 0 || digitalRead(toggle_3) == 0 || digitalRead(toggle_4) == 0) {
+  if (digitalRead(toggle1_in)) {
+    while (analogRead(throttle_in) <= 3200 || digitalRead(toggle1_in) == 0 || digitalRead(toggle2_in) == 0 || digitalRead(toggle3_in) == 0 || digitalRead(toggle4_in) == 0) {
       MP3_Player_playTrack(1);
       delay(3000);
     }
@@ -148,32 +150,19 @@ void loop() {
 
   if (BluetoothMode) {
     if (bleGamepad.isConnected()) {
-
-      int mapThrottle = mapConstrain(analogRead(throttle_in), 200, 3500, 32767, 0, 16383, 1850, 1850, throttle_fine);
-      int mapYaw = mapConstrain(analogRead(yaw_in), 400, 3450, 0, 32767, 16383, 1820, 1960, yaw_fine);
-      int mapPitch = mapConstrain(analogRead(pitch_in), 400, 3050, 0, 32767, 16383, 1690, 1890, pitch_fine);
-      int mapRoll = mapConstrain(analogRead(roll_in), 280, 3300, 32767, 0, 16383, 1580, 1740, roll_fine);
-      int mapPot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 32767, 0, 16383, 2048, 2048);
-      int mapPot2 = mapConstrain(analogRead(pot2_in), 0, 4095, 32767, 0, 16383, 2048, 2048);
-      int AUX1 = digitalRead(toggle_1);
-      int AUX2 = digitalRead(toggle_2);
-      int AUX3 = digitalRead(toggle_3);
-      int AUX4 = digitalRead(toggle_4);
-      int Switch1 = digitalRead(switch_1);
-      int Switch2 = digitalRead(switch_2);
-
-      Serial.print("Bluetooth Throttle= "), Serial.print(mapThrottle);
-      Serial.print(" Yaw= "), Serial.print(mapYaw);
-      Serial.print(" Pitch= "), Serial.print(mapPitch);
-      Serial.print(" Roll= "), Serial.print(mapRoll);
-      Serial.print(" Pot1= "), Serial.print(mapPot1);
-      Serial.print(" Pot2= "), Serial.print(mapPot2);
-      Serial.print(" AUX1= "), Serial.print(AUX1);
-      Serial.print(" AUX2= "), Serial.print(AUX2);
-      Serial.print(" AUX3= "), Serial.print(AUX3);
-      Serial.print(" AUX4= "), Serial.print(AUX4);
-      Serial.print(" Switch1= "), Serial.print(Switch1);
-      Serial.print(" Switch2= "), Serial.println(Switch2);
+      Throttle = mapConstrain(analogRead(throttle_in), 200, 3500, 0, 32767, 16383, 1850, 1850, throttle_fine);
+      Yaw = mapConstrain(analogRead(yaw_in), 400, 3450, 0, 32767, 16383, 1820, 1960, yaw_fine);
+      Pitch = mapConstrain(analogRead(pitch_in), 400, 3050, 0, 32767, 16383, 1690, 1890, pitch_fine);
+      Roll = mapConstrain(analogRead(roll_in), 280, 3300, 32767, 0, 16383, 1580, 1740, roll_fine);
+      Pot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 32767, 0, 16383, 2048, 2048);
+      Pot2 = mapConstrain(analogRead(pot2_in), 0, 4095, 32767, 0, 16383, 2048, 2048);
+      AUX1 = !digitalRead(toggle1_in);
+      AUX2 = !digitalRead(toggle2_in);
+      AUX3 = !digitalRead(toggle3_in);
+      AUX4 = !digitalRead(toggle4_in);
+      Switch1 = digitalRead(switch1_in);
+      Switch2 = digitalRead(switch2_in);
+      printData();
 
       handleButtonPress(AUX1, BUTTON_1);
       handleButtonPress(AUX2, BUTTON_2);
@@ -184,16 +173,19 @@ void loop() {
     }
   } else {
 
-    data.throttle = mapConstrain(analogRead(throttle_in), 200, 3500, 255, 0, 127, 1750, 1850, throttle_fine);
-    data.yaw = mapConstrain(analogRead(yaw_in), 400, 3450, 0, 255, 127, 1820, 1960, yaw_fine);
-    data.pitch = mapConstrain(analogRead(pitch_in), 400, 3050, 0, 255, 127, 1690, 1890, pitch_fine);
-    data.roll = mapConstrain(analogRead(roll_in), 280, 3300, 255, 0, 127, 1580, 1740, roll_fine);
-    data.pot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 255, 0, 127, 2048, 2048);
-    data.pot2 = mapConstrain(analogRead(pot2_in), 0, 4095, 255, 0, 127, 2048, 2048);
-    data.AUX1 = !digitalRead(toggle_1);
-    data.AUX2 = !digitalRead(toggle_2);
-    data.AUX3 = !digitalRead(toggle_3);
-    data.AUX4 = !digitalRead(toggle_4);
+    data.throttle = Throttle = mapConstrain(analogRead(throttle_in), 200, 3500, 255, 0, 127, 1750, 1850, throttle_fine);
+    data.yaw = Yaw = mapConstrain(analogRead(yaw_in), 400, 3450, 0, 255, 127, 1820, 1960, yaw_fine);
+    data.pitch = Pitch = mapConstrain(analogRead(pitch_in), 400, 3050, 0, 255, 127, 1690, 1890, pitch_fine);
+    data.roll = Roll = mapConstrain(analogRead(roll_in), 280, 3300, 255, 0, 127, 1580, 1740, roll_fine);
+    data.pot1 = Pot1 = mapConstrain(analogRead(pot1_in), 0, 4095, 255, 0, 127, 2048, 2048);
+    data.pot2 = Pot2 = mapConstrain(analogRead(pot2_in), 0, 4095, 255, 0, 127, 2048, 2048);
+    data.AUX1 = AUX1 = !digitalRead(toggle1_in);
+    data.AUX2 = AUX2 = !digitalRead(toggle2_in);
+    data.AUX3 = AUX3 = !digitalRead(toggle3_in);
+    data.AUX4 = AUX4 = !digitalRead(toggle4_in);
+    Switch1 = digitalRead(switch1_in);
+    Switch2 = digitalRead(switch2_in);
+    printData();
 
     if (data.AUX1 != previousAUX1) {
       if (data.AUX1 == HIGH) {
@@ -228,18 +220,6 @@ void loop() {
       previousAUX4 = data.AUX4;
     }
 
-    Serial.print(" Throttle= "), Serial.print(data.throttle);
-    Serial.print(" Yaw= "), Serial.print(data.yaw);
-    Serial.print(" Pitch= "), Serial.print(data.pitch);
-    Serial.print(" Roll= "), Serial.print(data.roll);
-    Serial.print(" Pot1= "), Serial.print(data.pot1);
-    Serial.print(" Pot2= "), Serial.print(data.pot2);
-    Serial.print(" AUX1= "), Serial.print(data.AUX1);
-    Serial.print(" AUX2= "), Serial.print(data.AUX2);
-    Serial.print(" AUX3= "), Serial.print(data.AUX3);
-    Serial.print(" AUX4= "), Serial.print(data.AUX4);
-    Serial.print(" Switch1= "), Serial.print(digitalRead(switch_1));
-    Serial.print(" Switch2= "), Serial.println(digitalRead(switch_2));
     radio.write(&data, sizeof(MyData));
     delay(10);
   }
