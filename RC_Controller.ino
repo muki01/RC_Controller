@@ -61,6 +61,8 @@ int Throttle, Yaw, Pitch, Roll, Pot1, Pot2, AUX1, AUX2, AUX3, AUX4, Switch1, Swi
 
 float batteryLevel = 0;
 int button_read = 0;
+bool sound = true, BluetoothMode = false;
+int counter = 0, invert_counter = 0;
 
 int throttle_fine = 0, yaw_fine = 0, pitch_fine = 0, roll_fine = 0;
 int throttle_to_send = 0, yaw_to_send = 0, pitch_to_send = 0, roll_to_send = 0, pot1_to_send = 0, pot2_to_send = 0;
@@ -68,23 +70,11 @@ bool throttle_inverted = true, yaw_inverted = true, pitch_inverted = true, roll_
 bool throttle_decrease = false, yaw_decrease = false, pitch_decrease = false, roll_decrease = false;
 bool throttle_increase = false, yaw_increase = false, pitch_increase = false, roll_increase = false;
 
-bool previousAUX1 = LOW;
-bool previousAUX2 = LOW;
-bool previousAUX3 = LOW;
-bool previousAUX4 = LOW;
+// Previous AUX States
+bool previousAUX1 = LOW, previousAUX2 = LOW, previousAUX3 = LOW, previousAUX4 = LOW;
 
 // Flags for each battery level
-bool warningFull = false;      // Full battery warning flag
-bool warningHigh = false;      // High battery warning flag
-bool warningMedium = false;    // Medium battery warning flag
-bool warningLow = false;       // Low battery warning flag
-bool warningVeryLow = false;   // Very low battery warning flag
-bool warningCritical = false;  // Critical battery warning flag
-
-void melody1();
-
-bool sound = true, BluetoothMode = false;
-int counter = 0, invert_counter = 0;
+bool warningFull = false, warningHigh = false, warningMedium = false, warningLow = false, warningVeryLow = false, warningCritical = false;
 
 int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine = 0);
 
@@ -123,12 +113,13 @@ void setup() {
     beginNRF24();
     resetData();
     MP3_Player_playTrack(8);
-    delay(1600);
+    delay(1800);
   } else {
     MP3_Player_playTrack(9);
     delay(1600);
     BluetoothMode = true;
     beginBluetooth();
+    delay(500);
   }
 
   // Serial.print("Throttle_fine= "), Serial.print(throttle_fine);
