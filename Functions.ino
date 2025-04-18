@@ -24,31 +24,37 @@ void battery() {
     Serial.print("Battery is full. Ready to go! ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(12);
+    bleGamepad.setBatteryLevel(100);
     warningFull = true;  // Set the warning flag to true
   } else if (batteryLevel >= 7.6 && batteryLevel < 8.1 && !warningHigh) {
     Serial.print("Battery level is high. No need to charge. ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(13);
+    bleGamepad.setBatteryLevel(80);
     warningHigh = true;  // Set the warning flag to true
   } else if (batteryLevel >= 7.3 && batteryLevel < 7.6 && !warningMedium) {
     Serial.print("Battery level is medium. Consider charging soon. ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(14);
+    bleGamepad.setBatteryLevel(60);
     warningMedium = true;  // Set the warning flag to true
   } else if (batteryLevel >= 6.9 && batteryLevel < 7.3 && !warningLow) {
     Serial.print("Warning! Battery level is low. Charge when possible. ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(15);
+    bleGamepad.setBatteryLevel(40);
     warningLow = true;  // Set the warning flag to true
   } else if (batteryLevel >= 6.7 && batteryLevel < 6.9 && !warningVeryLow) {
     Serial.print("Critical warning! Battery is very low. Charge immediately! ");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(10);
+    bleGamepad.setBatteryLevel(20);
     warningVeryLow = true;  // Set the warning flag to true
   } else if (batteryLevel < 6.7 && !warningCritical) {
     Serial.print("Battery is about to die! Shutting down soon!");
     Serial.println(batteryLevel);
     MP3_Player_playTrack(11);
+    bleGamepad.setBatteryLevel(10);
     warningCritical = true;  // Set the warning flag to true
   }
 }
