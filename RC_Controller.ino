@@ -76,6 +76,12 @@ bool previousAUX1 = LOW, previousAUX2 = LOW, previousAUX3 = LOW, previousAUX4 = 
 // Flags for each battery level
 bool warningFull = false, warningHigh = false, warningMedium = false, warningLow = false, warningVeryLow = false, warningCritical = false;
 
+unsigned long lastMovementTime = 0;
+bool warned1 = false, warned2 = false;
+
+int lastThrottle = 0, lastYaw = 0, lastPitch = 0, lastRoll = 0;
+const int movementThreshold = 5;
+
 int mapConstrain(int input, int in_min, int in_max, int out_min, int out_max, int center, int deadzone_low, int deadzone_high, int fine = 0);
 
 void setup() {
@@ -121,6 +127,8 @@ void setup() {
     beginBluetooth();
     delay(500);
   }
+
+  lastMovementTime = millis();  // başlangıç zamanı
 
   // Serial.print("Throttle_fine= "), Serial.print(throttle_fine);
   // Serial.print(" Yaw_fine= "), Serial.print(yaw_fine);
@@ -217,4 +225,33 @@ void loop() {
     radio.write(&data, sizeof(MyData));
     delay(10);
   }
+
+  bool movementDetected = abs(Throttle - lastThrottle) > movementThreshold || abs(Yaw - lastYaw) > movementThreshold || abs(Pitch - lastPitch) > movementThreshold || abs(Roll - lastRoll) > movementThreshold;
+
+  if (movementDetected) {
+    lastMovementTime = millis();
+    warned1 = false;
+    warned2 = false;
+  } else {
+    unsigned long elapsed = millis() - lastMovementTime;
+    if (elapsed >= 60000 && !warned1) {
+      MP3_Player_playTrack(16);
+      warned1 = true;
+    }
+    if (elapsed >= 90000 && !warned2) {
+      MP3_Player_playTrack(16);
+      warned2 = true;
+    }
+    if (elapsed >= 120000) {
+      Serial.println("No movement detected for 2 minutes, entering deep sleep.");
+      MP3_Player_playTrack(17);
+      delay(1000);
+      esp_deep_sleep_start();
+    }
+  }
+
+  lastThrottle = Throttle;
+  lastYaw = Yaw;
+  lastPitch = Pitch;
+  lastRoll = Roll;
 }
