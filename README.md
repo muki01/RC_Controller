@@ -75,3 +75,17 @@ Below are some photos showcasing the ESP32 RC controller setup, wiring, and its 
 
   <img width=45% src="https://github.com/user-attachments/assets/f55aea83-6e70-4620-a158-4ef730dc94f9">
   <img width=47% src="https://github.com/user-attachments/assets/6ecc1565-f0f1-4001-8707-25153237c4bf">
+
+---
+
+## ☕ Support My Work
+
+If you enjoy my projects and want to support me, you can do so through the links below:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/-Buy%20Me%20a%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/muki01)
+[![PayPal](https://img.shields.io/badge/-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=SAAH5GHAH6T72)
+[![GitHub Sponsors](https://img.shields.io/badge/-Sponsor%20Me%20on%20GitHub-181717?style=for-the-badge&logo=github)](https://github.com/sponsors/muki01)
+
+📧 **Contact:** `muksin.muksin04@gmail.com`
+
+---
